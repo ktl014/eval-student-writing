@@ -1,14 +1,16 @@
 import random
 from typing import Optional, Sequence
 
+import os
 import hydra
 import numpy as np
+import pandas as pd
 import omegaconf
 import pytorch_lightning as pl
 import torch
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader, Dataset
-from datasets import load_dataset
+from datasets import load_dataset, ClassLabel
 from transformers import AutoTokenizer
 
 from src.common.utils import PROJECT_ROOT
@@ -41,6 +43,19 @@ class MyDataModule(pl.LightningDataModule):
         tokenizer: str,
         max_length: int,
     ):
+        """Initialize data variables from .env file
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+
+        Args:
+            datasets (DictConfig): dataset contains train, val and test
+            num_workers (DictConfig): number of thread/processes working parallel
+            batch_size (DictConfig): batch size for train, val and test
+            tokenizer (str): model's name
+            max_length (int): max number of word per line (BERT can store max 512 words per line)
+        """
         super().__init__()
         self.datasets = datasets
         self.num_workers = num_workers
@@ -53,50 +68,82 @@ class MyDataModule(pl.LightningDataModule):
         self.test_datasets: Optional[Sequence[Dataset]] = None
 
     def prepare_data(self) -> None:
-        # download only
-        ews_dataset = load_dataset(
-            "json",
+        """Load dataset and split 80-train and 20 test
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.prepare_data()
+
+        Returns:
+
+        """
+        # Split train to first 80%
+        self.train_dataset = load_dataset(
+            "csv",
             data_files={
                 "train": self.datasets.train.path,
-                "validation": self.datasets.val.path,
             },
+            split='train[:80%]'
         )
-        self.train_dataset = ews_dataset["train"]
-        self.val_dataset = ews_dataset["validation"]
 
-    def tokenize_data(self, example):
-        return self.tokenizer(
-            example["sentence"],
+        # Split val to last 20%
+        self.val_dataset = load_dataset(
+            'csv',
+            data_files={
+                'train': self.datasets.train.path
+            },
+            split='train[-20%:]')
+
+        # Save all unique labels
+        dset_df = pd.read_csv(self.datasets.train.path)
+        unique_labels = list(dset_df['discourse_type'].unique())
+        self.labels = ClassLabel(names=unique_labels)
+
+    def tokenize_and_label_encoding(self, example):
+        """ Tokenize features and encode label
+
+        Args:
+            example (datasets.Dataset): dataset
+
+        Returns:
+
+        """
+        tokens = self.tokenizer(
+            example["discourse_text"],
             truncation=True,
             padding="max_length",
-            max_length=self.max_length,
+            max_length=512,
         )
+        tokens['discourse_type'] = self.labels.str2int(example['discourse_type'])
+        return tokens
 
     def setup(self, stage: Optional[str] = None):
         # Here you should instantiate your datasets, you may also
-        # split the train into train and validation if needed.
         if stage == "fit" or stage is None:
             self.train_dataset = self.train_dataset.map(
-                self.tokenize_data, batched=True
+                self.tokenize_and_label_encoding, batched=True
             )
             self.train_dataset.set_format(
-                type="torch", columns=["input_ids", "attention_mask", "label"]
+                type="torch", columns=["input_ids", "attention_mask", "discourse_type"]
             )
 
-            self.val_dataset = self.val_dataset.map(self.tokenize_data, batched=True)
+            self.val_dataset = self.val_dataset.map(
+                self.tokenize_and_label_encoding, batched=True
+            )
             self.val_dataset.set_format(
                 type="torch",
-                columns=["input_ids", "attention_mask", "label"],
-                output_all_columns=True,
+                columns=["input_ids", "attention_mask", "discourse_type"]
             )
 
-        if stage is None or stage == "test":
-            self.test_datasets = [
-                hydra.utils.instantiate(dataset_cfg)
-                for dataset_cfg in self.datasets.test
-            ]
+        # if stage is None or stage == "test":
+        #     self.test_datasets = [
+        #         hydra.utils.instantiate(dataset_cfg)
+        #         for dataset_cfg in self.datasets.test
+        #     ]
 
     def train_dataloader(self) -> DataLoader:
+        print("This is data loader")
         return DataLoader(
             self.train_dataset,
             shuffle=True,
@@ -139,6 +186,10 @@ def main(cfg: omegaconf.DictConfig):
     datamodule: pl.LightningDataModule = hydra.utils.instantiate(
         cfg.data.datamodule, _recursive_=False
     )
+
+    datamodule.prepare_data()
+    datamodule.setup()
+    print(next(iter(datamodule.train_dataloader()))["input_ids"].shape)
 
 
 if __name__ == "__main__":
