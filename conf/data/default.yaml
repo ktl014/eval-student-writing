@@ -1,0 +1,27 @@
+datamodule:
+  _target_: src.pl_data.datamodule.MyDataModule
+
+  val_percentage: 0.15
+
+  datasets:
+    train:
+      _target_: src.pl_data.dataset.MyDataset
+      name: MNIST_TRAIN
+      train: True
+      path: ${oc.env:MNIST}
+
+    test:
+      - _target_: src.pl_data.dataset.MyDataset
+        name: MNIST_TEST
+        train: False
+        path: ${oc.env:MNIST}
+
+  num_workers:
+    train: 8
+    val: 4
+    test: 4
+
+  batch_size:
+    train: 32
+    val: 16
+    test: 16
