@@ -113,7 +113,7 @@ class MyDataModule(pl.LightningDataModule):
             example (datasets.Dataset): dataset
 
         Returns:
-
+            tokens (transformers.BatchEncoding): tokenized and label-encoded dataset
         """
         tokens = self.tokenizer(
             example["discourse_text"],
@@ -237,11 +237,6 @@ def main(cfg: omegaconf.DictConfig):
 
     datamodule.prepare_data()
     datamodule.setup()
-    # print(datamodule)
-    train_loader_iteration = iter(datamodule.train_dataloader())
-    # print(sum(1 for _ in train_loader_iteration))
-    # print(train_loader_iteration)
-    # print(next(train_loader_iteration))
     print(next(iter(datamodule.train_dataloader()))["input_ids"].shape)
 
 
