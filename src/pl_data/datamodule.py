@@ -68,7 +68,7 @@ class MyDataModule(pl.LightningDataModule):
         self.test_datasets: Optional[Sequence[Dataset]] = None
 
     def prepare_data(self) -> None:
-        """Load dataset and split 80-train and 20 test
+        """Load dataset and split 80-train and 20-validation
 
         Usage:
         >>> from src.pl_data.datamodule import MyDataModule
@@ -94,6 +94,7 @@ class MyDataModule(pl.LightningDataModule):
                 'train': self.datasets.train.path
             },
             split='train[-20%:]')
+        # print(f"train size: {len(self.train_dataset)} --- val size: {len(self.val_dataset)}")
 
         # Save all unique labels
         dset_df = pd.read_csv(self.datasets.train.path)
@@ -102,6 +103,11 @@ class MyDataModule(pl.LightningDataModule):
 
     def tokenize_and_label_encoding(self, example):
         """ Tokenize features and encode label
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.tokenize_and_label_encoding(my_dataset.train_dataset)
 
         Args:
             example (datasets.Dataset): dataset
@@ -113,12 +119,25 @@ class MyDataModule(pl.LightningDataModule):
             example["discourse_text"],
             truncation=True,
             padding="max_length",
-            max_length=512,
+            max_length=self.max_length,
         )
         tokens['discourse_type'] = self.labels.str2int(example['discourse_type'])
         return tokens
 
     def setup(self, stage: Optional[str] = None):
+        """Perform tokenizing, encoding and formatting dataset
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.setup()
+
+        Args:
+            stage (str): stage can either be fit, test, or None
+
+        Returns:
+
+        """
         # Here you should instantiate your datasets, you may also
         if stage == "fit" or stage is None:
             self.train_dataset = self.train_dataset.map(
@@ -143,7 +162,16 @@ class MyDataModule(pl.LightningDataModule):
         #     ]
 
     def train_dataloader(self) -> DataLoader:
-        print("This is data loader")
+        """Apply DataLoader on train dataset - shuffle, batch_size, and workers
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.train_dataloader()()
+
+        Returns:
+            Sequence[DataLoader]: return a Sequence of size = len(train_dataset) / batch_size
+        """
         return DataLoader(
             self.train_dataset,
             shuffle=True,
@@ -153,6 +181,16 @@ class MyDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
+        """Apply DataLoader on val dataset - shuffle, batch_size, and workers
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.val_dataloader()
+
+        Returns:
+            Sequence[DataLoader]: return a Sequence of size = len(val_dataset) / batch_size
+        """
         return DataLoader(
             self.val_dataset,
             shuffle=False,
@@ -161,6 +199,16 @@ class MyDataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self) -> Sequence[DataLoader]:
+        """Apply DataLoader on val dataset - shuffle, batch_size, and workers
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.test_dataloader()
+
+        Returns:
+            Sequence[DataLoader]: return a Sequence of size = len(test_dataset) / batch_size
+        """
         return [
             DataLoader(
                 dataset,
@@ -189,6 +237,11 @@ def main(cfg: omegaconf.DictConfig):
 
     datamodule.prepare_data()
     datamodule.setup()
+    # print(datamodule)
+    train_loader_iteration = iter(datamodule.train_dataloader())
+    # print(sum(1 for _ in train_loader_iteration))
+    # print(train_loader_iteration)
+    # print(next(train_loader_iteration))
     print(next(iter(datamodule.train_dataloader()))["input_ids"].shape)
 
 

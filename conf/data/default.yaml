@@ -24,6 +24,6 @@ datamodule:
     val: 16
     test: 16
 
-  max_length: 512
+  max_length: 300
 
   tokenizer: "google/bert_uncased_L-2_H-128_A-2"
