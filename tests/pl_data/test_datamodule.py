@@ -50,12 +50,13 @@ class TestDataModule():
         # Check if number of labels are correctly computed from the dataset
         assert data_module.labels.num_classes == num_unique_labels
 
-    # def test_tokenize_and_label_encoding(self, data_module):
-    #     #=== Input ===#
-    #     data = {'discourse_test': ['This is a dummy sentence', 'Hello World!'],
-    #             'discourse_type': ['dummy', 'friendly']}
-    #     df = pd.DataFrame(data=data)
-    #
-    #     #=== Expected Output ===#
-    #     tokens = data_module.tokenize_and_label_encoding(df)
-    #     print(tokens)
+    @pytest.mark.xfail(reason="Has not yet implemented test case for this method")
+    def test_tokenize_and_label_encoding(self, data_module):
+        #=== Input ===#
+        data = {'discourse_test': ['This is a dummy sentence', 'Hello World!'],
+                'discourse_type': ['dummy', 'friendly']}
+        df = pd.DataFrame(data=data)
+    
+        #=== Expected Output ===#
+        tokens = data_module.tokenize_and_label_encoding(df)
+        print(tokens)
