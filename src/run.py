@@ -1,3 +1,11 @@
+"""
+
+USAGE
+# edit `conf/train/default.yaml`
+>>> python3 -m src.run
+
+"""
+
 import os
 from pathlib import Path
 from typing import List
@@ -77,7 +85,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
         hydra.utils.log.info(f"Adding callback <ModelCheckpoint>")
         callbacks.append(
             ModelCheckpoint(
-                dirpath="./models",
+                dirpath=str(PROJECT_ROOT / "models"),
                 filename="best-checkpoint.ckpt",
                 monitor=cfg.train.monitor_metric,
                 mode=cfg.train.monitor_metric_mode,
