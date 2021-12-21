@@ -94,11 +94,8 @@ class MyDataModule(pl.LightningDataModule):
 
         # Split val to last 20%
         self.val_dataset = load_dataset(
-            'csv',
-            data_files={
-                'train': self.datasets.train.path
-            },
-            split='train[-20%:]')
+            "csv", data_files={"train": self.datasets.train.path}, split="train[-20%:]"
+        )
 
         # Save all unique labels
         dset_df = pd.read_csv(self.datasets.train.path)
