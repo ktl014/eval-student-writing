@@ -4,21 +4,53 @@ from typing import List
 
 import hydra
 import omegaconf
+import pandas as pd
 import pytorch_lightning as pl
+import torch
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning import seed_everything, Callback
-from pytorch_lightning.callbacks import (
-    EarlyStopping,
-    LearningRateMonitor,
-    ModelCheckpoint,
-)
+from pytorch_lightning import Callback, seed_everything
+from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor,
+                                         ModelCheckpoint)
 from pytorch_lightning.loggers import WandbLogger
 
-from src.common.utils import log_hyperparameters, PROJECT_ROOT
+import wandb
+from src.common.constants import GenericConstants as gc
+from src.common.utils import PROJECT_ROOT, log_hyperparameters
 
 
-def build_callbacks(cfg: DictConfig) -> List[Callback]:
+class SamplesVisualisationLogger(pl.Callback):
+    def __init__(self, datamodule):
+        super().__init__()
+
+        self.datamodule = datamodule
+
+    def on_validation_end(self, trainer, pl_module):
+        val_batch = next(iter(self.datamodule.val_dataloader()))
+        sentences = val_batch[gc.SENTENCE]
+
+        outputs = pl_module(val_batch["input_ids"], val_batch["attention_mask"])
+        preds = torch.argmax(outputs.logits, 1)
+        labels = val_batch[gc.LABEL]
+
+        df = pd.DataFrame(
+            {
+                gc.SENTENCE: sentences,
+                gc.LABEL: labels.numpy(),
+                "Predicted": preds.numpy(),
+            }
+        )
+
+        wrong_df = df[df[gc.LABEL] != df["Predicted"]]
+        trainer.logger.experiment.log(
+            {
+                "examples": wandb.Table(dataframe=wrong_df, allow_mixed_types=True),
+                "global_step": trainer.global_step,
+            }
+        )
+
+
+def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
     callbacks: List[Callback] = []
 
     if "lr_monitor" in cfg.logging:
@@ -45,12 +77,18 @@ def build_callbacks(cfg: DictConfig) -> List[Callback]:
         hydra.utils.log.info(f"Adding callback <ModelCheckpoint>")
         callbacks.append(
             ModelCheckpoint(
+                dirpath="./models",
+                filename="best-checkpoint.ckpt",
                 monitor=cfg.train.monitor_metric,
                 mode=cfg.train.monitor_metric_mode,
                 save_top_k=cfg.train.model_checkpoints.save_top_k,
                 verbose=cfg.train.model_checkpoints.verbose,
             )
         )
+
+    if "sample_visualisation" in cfg.train:
+        hydra.utils.log.info(f"Adding callback <SamplesVisualisationLogger>")
+        callbacks.append(SamplesVisualisationLogger(datamodule))
 
     return callbacks
 
@@ -88,9 +126,9 @@ def run(cfg: DictConfig) -> None:
     )
 
     # Instantiate model
-    hydra.utils.log.info(f"Instantiating <{cfg.model._target_}>")
+    hydra.utils.log.info(f"Instantiating <{cfg.model.modelmodule._target_}>")
     model: pl.LightningModule = hydra.utils.instantiate(
-        cfg.model,
+        cfg.model.modelmodule,
         optim=cfg.optim,
         data=cfg.data,
         logging=cfg.logging,
@@ -98,7 +136,7 @@ def run(cfg: DictConfig) -> None:
     )
 
     # Instantiate the callbacks
-    callbacks: List[Callback] = build_callbacks(cfg=cfg)
+    callbacks: List[Callback] = build_callbacks(cfg=cfg, datamodule=datamodule)
 
     # Logger instantiation/configuration
     wandb_logger = None
@@ -138,7 +176,7 @@ def run(cfg: DictConfig) -> None:
     trainer.fit(model=model, datamodule=datamodule)
 
     hydra.utils.log.info(f"Starting testing!")
-    trainer.test(datamodule=datamodule)
+    # trainer.test(datamodule=datamodule)
 
     # Logger closing to release resources/avoid multi-run conflicts
     if wandb_logger is not None:
