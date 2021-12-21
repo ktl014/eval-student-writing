@@ -4,7 +4,7 @@ progress_bar_refresh_rate: 20
 
 wandb:
   project: eval-student-writing
-  entity: ktl014
+  entity: eval-student-writing
   log_model: True
   mode: 'online'
 
