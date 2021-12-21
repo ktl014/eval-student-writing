@@ -6,7 +6,6 @@ import dotenv
 import numpy as np
 import pytorch_lightning as pl
 import torch
-import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
 
 
