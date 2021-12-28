@@ -89,7 +89,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
         callbacks.append(
             ModelCheckpoint(
                 dirpath=str(PROJECT_ROOT / "models"),
-                filename="best-checkpoint.ckpt",
+                filename="best-checkpoint",
                 monitor=cfg.train.monitor_metric,
                 mode=cfg.train.monitor_metric_mode,
                 save_top_k=cfg.train.model_checkpoints.save_top_k,
