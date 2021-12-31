@@ -11,8 +11,8 @@ jobs:
 
     - name: Install python version
     - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
+      with:
+        python-version: 3.8
 
     - name: Test with pytest
       run: |
@@ -21,10 +21,10 @@ jobs:
 
 
     - name: Run coverage with pytest
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-          pip install coverage
-          coverage run --source eval-student-writing -m pytest
-          coverage report -m
-          coverage html
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+        pip install coverage
+        coverage run --source eval-student-writing -m pytest
+        coverage report -m
+        coverage html

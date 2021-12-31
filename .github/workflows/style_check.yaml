@@ -15,9 +15,9 @@ jobs:
         python-version: 3.8
 
     - name: Run isort
-        run: |
-          pip install isort
-          isort .
+      run: |
+        pip install isort
+        isort .
 
     - name: Run flake8
       run: |
