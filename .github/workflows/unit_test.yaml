@@ -1,0 +1,30 @@
+name: Python Lint
+
+on: [push, pull_request]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out Git repository
+      uses: actions/checkout@v2
+
+    - name: Install python version
+    - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+    - name: Test with pytest
+      run: |
+
+        pytest
+
+
+    - name: Run coverage with pytest
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install coverage
+          coverage run --source eval-student-writing -m pytest
+          coverage report -m
+          coverage html
