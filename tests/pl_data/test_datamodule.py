@@ -7,13 +7,9 @@ import pandas as pd
 import pytest
 from hydra import compose
 
-from src.common.utils import PROJECT_ROOT
-
-os.chdir(PROJECT_ROOT)
-
-print(str(Path(__file__).resolve().parents[0]))
-sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+# print(str(Path(__file__).resolve().parents[0]))
+# sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
+# sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 cfg = compose(config_name="default")
@@ -61,4 +57,4 @@ class TestDataModule:
 
         # === Expected Output ===#
         tokens = data_module.tokenize_and_label_encoding(df)
-        # print(tokens)
+        print(tokens)

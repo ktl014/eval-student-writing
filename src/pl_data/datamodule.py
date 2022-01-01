@@ -3,6 +3,7 @@ import random
 from typing import Optional, Sequence
 
 import hydra
+import os
 import numpy as np
 import omegaconf
 import pandas as pd
@@ -85,6 +86,8 @@ class MyDataModule(pl.LightningDataModule):
         Returns:
 
         """
+        print(os.getcwd())
+        print(os.listdir(os.getcwd()))
         # Split train to first 80%
         self.train_datasets = load_dataset(
             "csv",
