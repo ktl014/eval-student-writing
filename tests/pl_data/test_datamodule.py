@@ -7,10 +7,13 @@ import pandas as pd
 import pytest
 from hydra import compose
 
+from src.common.utils import PROJECT_ROOT
+
 # print(str(Path(__file__).resolve().parents[0]))
 # sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
 # sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+os.chdir(PROJECT_ROOT)
 
 cfg = compose(config_name="default")
 
@@ -18,6 +21,7 @@ cfg = compose(config_name="default")
 class TestDataModule:
     @pytest.fixture
     def data_module(self):
+        print(PROJECT_ROOT)
         return hydra.utils.instantiate(cfg.data.datamodule, _recursive_=False)
 
     def test_prepare_data(self, data_module):
