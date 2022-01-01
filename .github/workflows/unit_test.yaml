@@ -3,7 +3,7 @@ name: Python Lint
 on: [push, pull_request]
 
 jobs:
-  run-tests:
+  Unit-testing:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository

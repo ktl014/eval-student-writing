@@ -9,7 +9,7 @@ import torchmetrics
 from hydra import compose
 
 from src.common.constants import GenericConstants as gc
-from src.common.utils import PROJECT_ROOT
+# from src.common.utils import PROJECT_ROOT
 
 # print(str(Path(__file__).resolve().parents[0]))
 # sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
