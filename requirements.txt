@@ -16,3 +16,5 @@ matplotlib
 stqdm
 pytest==6.2.5
 coverage
+datasets
+transformers
