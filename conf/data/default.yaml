@@ -4,15 +4,15 @@ datamodule:
   datasets:
     train:
       name: EWS_TRAIN
-      path: data/raw/train.csv # ${oc.env:YOUR_TRAIN_DATASET_PATH}
+      path: ${oc.env:YOUR_TRAIN_DATASET_PATH}
 
     val:
       name: EWS_VAL
-      path: empty # ${oc.env:YOUR_VAL_DATASET_PATH}
+      path: ${oc.env:YOUR_VAL_DATASET_PATH}
 
     test:
       name: EWS_TEST
-      path: empty # ${oc.env:YOUR_TEST_DATASET_PATH}
+      path: ${oc.env:YOUR_TEST_DATASET_PATH}
 
   num_workers:
     train: 1

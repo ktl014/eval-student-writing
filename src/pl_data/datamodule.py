@@ -18,7 +18,7 @@ from src.common.constants import GenericConstants as gc
 from src.common.utils import PROJECT_ROOT
 
 
-def worker_init_fn():
+def worker_init_fn(worker_id):
     """
     DataLoaders workers init function.
 
@@ -86,8 +86,6 @@ class MyDataModule(pl.LightningDataModule):
         Returns:
 
         """
-        print(os.getcwd())
-        print(os.listdir(os.getcwd()))
         # Split train to first 80%
         self.train_datasets = load_dataset(
             "csv",
