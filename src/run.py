@@ -85,6 +85,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
         )
 
     if "model_checkpoints" in cfg.train:
+        #todo store filename into config
         hydra.utils.log.info(f"Adding callback <ModelCheckpoint>")
         callbacks.append(
             ModelCheckpoint(

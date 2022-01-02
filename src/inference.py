@@ -14,6 +14,7 @@ class ColaPredictor:
         self.model.eval()
         self.model.freeze()
         self.softmax = torch.nn.Softmax(dim=1)
+        #todo include into the config data the list of labels
         self.labels = ["Lead", "Position", "Evidence", "Claim",
                        "Concluding Statement", "Counterclaim",
                        "Rebuttal"]

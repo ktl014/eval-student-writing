@@ -103,7 +103,7 @@ class MyDataModule(pl.LightningDataModule):
         self.labels = ClassLabel(names=unique_labels)
 
     def tokenize(self, example):
-        """Tokenize features and encode label
+        """Tokenize features
 
         Usage:
         >>> from src.pl_data.datamodule import MyDataModule
@@ -114,7 +114,7 @@ class MyDataModule(pl.LightningDataModule):
             example (datasets.Dataset): dataset
 
         Returns:
-            tokens (transformers.BatchEncoding): tokenized and label-encoded dataset
+            tokens (transformers.BatchEncoding): tokenized dataset
         """
         tokens = self.tokenizer(
             example["discourse_text"],
@@ -179,15 +179,15 @@ class MyDataModule(pl.LightningDataModule):
                 output_all_columns=True,
             )
 
-        if stage is None or stage == "test":
-            self.test_datasets = self.test_datasets.map(
-                self.tokenize(self.tokenize)
-            )
-            self.test_datasets.set_format(
-                type="torch",
-                columns=["input_ids", "attention_mask"],
-                output_all_columns=True,
-            )
+        # if stage is None or stage == "test":
+        #     self.test_datasets = self.test_datasets.map(
+        #         self.tokenize(self.tokenize)
+        #     )
+        #     self.test_datasets.set_format(
+        #         type="torch",
+        #         columns=["input_ids", "attention_mask"],
+        #         output_all_columns=True,
+        #     )
 
     def train_dataloader(self) -> DataLoader:
         """Apply DataLoader on train dataset - shuffle, batch_size, and workers
