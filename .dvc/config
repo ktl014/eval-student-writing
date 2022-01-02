@@ -1,0 +1,4 @@
+[core]
+    remote = url
+['remote "url"']
+    url = s3://model-dataset-store

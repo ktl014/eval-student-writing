@@ -6,6 +6,7 @@ USAGE
 
 """
 
+import os
 from pathlib import Path
 from typing import List
 
@@ -183,7 +184,7 @@ def run(cfg: DictConfig) -> None:
             **wandb_config,
             tags=cfg.core.tags,
         )
-        hydra.utils.log.info("W&B is now",
+        hydra.utils.log.info("W&B is now " 
                              f"watching <{cfg.logging.wandb_watch.log}>!")
         wandb_logger.watch(
             model,
