@@ -17,7 +17,6 @@ class MyModel(pl.LightningModule):
     def __init__(self, model_name, num_labels, *args, **kwargs) -> None:
         super().__init__()
         self.save_hyperparameters()  # populate self.hparams with args and kwargs automagically!
-
         self.bert = AutoModelForSequenceClassification.from_pretrained(
             model_name, num_labels=num_labels
         )
@@ -101,16 +100,16 @@ class MyModel(pl.LightningModule):
 
         ## There are multiple ways to track the metrics
         # 1. Confusion matrix plotting using inbuilt W&B method
-        # self.logger.experiment.log(
-        #     {
-        #         "conf": wandb.plot.confusion_matrix(
-        #             probs=logits.numpy(), y_true=labels.numpy()
-        #         )
-        #     }
-        # )
+        self.logger.experiment.log(
+            {
+                "conf": wandb.plot.confusion_matrix(
+                    probs=logits.cpu().numpy(), y_true=labels.cpu().numpy()
+                )
+            }
+        )
 
         # 2. Confusion Matrix plotting using scikit-learn method
-        wandb.log({"cm": wandb.sklearn.plot_confusion_matrix(labels.numpy(), preds)})
+        # wandb.log({"cm": wandb.sklearn.plot_confusion_matrix(labels.numpy(), preds)})
 
         # 3. Confusion Matric plotting using Seaborn
         # data = confusion_matrix(labels.numpy(), preds.numpy())
@@ -123,9 +122,9 @@ class MyModel(pl.LightningModule):
         # )  # font size
         # self.logger.experiment.log({"Confusion Matrix": wandb.Image(plot)})
 
-        # self.logger.experiment.log(
-        #     {"roc": wandb.plot.roc_curve(labels.numpy(), logits.numpy())}
-        # )
+        self.logger.experiment.log(
+            {"roc": wandb.plot.roc_curve(labels.cpu().numpy(), logits.cpu().numpy())}
+        )
 
     def configure_optimizers(
         self,

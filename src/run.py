@@ -40,15 +40,17 @@ class SamplesVisualisationLogger(pl.Callback):
         val_batch = next(iter(self.datamodule.val_dataloader()))
         sentences = val_batch[gc.SENTENCE]
 
-        outputs = pl_module(val_batch["input_ids"], val_batch["attention_mask"])
+        outputs = pl_module(
+            val_batch["input_ids"].to(pl_module.device),
+            val_batch["attention_mask"].to(pl_module.device))
         preds = torch.argmax(outputs.logits, 1)
         labels = val_batch[gc.LABEL]
 
         df = pd.DataFrame(
             {
                 gc.SENTENCE: sentences,
-                gc.LABEL: labels.numpy(),
-                "Predicted": preds.numpy(),
+                gc.LABEL: labels.cpu().numpy(),
+                "Predicted": preds.cpu().numpy(),
             }
         )
 
