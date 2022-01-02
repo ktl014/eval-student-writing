@@ -1,11 +1,22 @@
+"""
+
+Usage
+
+>>> python src/inference.py
+
+"""
+import logging
+
 import hydra
 import omegaconf
 import torch
-from omegaconf import DictConfig
+from tabulate import tabulate
 
 from src.common.utils import PROJECT_ROOT
 from src.pl_modules.model import MyModel
 from src.common.constants import GenericConstants as gc
+
+logger = logging.getLogger(__name__)
 
 class ColaPredictor:
     def __init__(self, model_path):
@@ -39,13 +50,15 @@ class ColaPredictor:
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
 def main(cfg: omegaconf.DictConfig):
     sentence = "In this situation they need someone to guid them through the online course, or they can take a home tutour."
-    predictor = ColaPredictor(
-        "/Users/ktl014/PycharmProjects/eval-student-writing/models/best"
-        "-checkpoint-v1.ckpt")
+    root_dir = hydra.utils.get_original_cwd()
+    model_path = f"{root_dir}/models/best-checkpoint.ckpt"
+    predictor = ColaPredictor(model_path=model_path)
     predictor.set_up(
         datamodule=hydra.utils.instantiate(cfg.data.datamodule)
     )
-    print(predictor.predict(sentence))
+    logger.info(f"MODEL_LOADED: {model_path}")
+    logger.info(f"INPUT: {sentence}")
+    logger.info(f"OUTPUT (see below):\n{tabulate(predictor.predict(sentence))}")
 
 
 if __name__ == "__main__":
