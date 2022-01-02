@@ -38,10 +38,11 @@ class ColaPredictor:
 
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
 def main(cfg: omegaconf.DictConfig):
-    sentence = "In this situation they need someone to guid them through the online course, or they can take a home tutour."
+    sentence = "In this situation they need someone to guid them through " \
+               "the online course, or they can take a home tutour."
     predictor = ColaPredictor(
-        "/Users/ktl014/PycharmProjects/eval-student-writing/models/best"
-        "-checkpoint-v1.ckpt")
+        "C:\Personal_Data/Project_Ideas/Evaluate_Student_Writing/eval"
+        "-student-writing/models/best-checkpoint-v3.ckpt")
     predictor.set_up(
         datamodule=hydra.utils.instantiate(cfg.data.datamodule)
     )
