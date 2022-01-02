@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+
 print(str(Path(__file__).resolve().parents[0]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -16,14 +17,13 @@ from src.common.utils import PROJECT_ROOT
 
 cfg = compose(config_name='default')
 
-class TestDataModule():
-
+class TestDataModule:
     @pytest.fixture
     def data_module(self):
         return hydra.utils.instantiate(cfg.data.datamodule, _recursive_=False)
 
     def test_prepare_data(self, data_module):
-        #=== Expected Output ===#
+        # === Expected Output ===#
 
         # Load dataset into dataframe from hydra config
         train_df = pd.read_csv(data_module.datasets.train.path)
@@ -36,9 +36,9 @@ class TestDataModule():
         val_dataset_size = round(row_count * 20 / 100)
 
         # Count number of unique labels
-        num_unique_labels = train_df['discourse_type'].nunique()
+        num_unique_labels = train_df["discourse_type"].nunique()
 
-        #=== Trigger output ===#
+        # === Trigger output ===#
         data_module.prepare_data()
 
         # Check if prepare_data() correctly split dataset into 80-train, 20-val
@@ -50,11 +50,13 @@ class TestDataModule():
 
     @pytest.mark.xfail(reason="Has not yet implemented test case for this method")
     def test_tokenize_and_label_encoding(self, data_module):
-        #=== Input ===#
-        data = {'discourse_test': ['This is a dummy sentence', 'Hello World!'],
-                'discourse_type': ['dummy', 'friendly']}
+        # === Input ===#
+        data = {
+            "discourse_test": ["This is a dummy sentence", "Hello World!"],
+            "discourse_type": ["dummy", "friendly"],
+        }
         df = pd.DataFrame(data=data)
-    
-        #=== Expected Output ===#
+
+        # === Expected Output ===#
         tokens = data_module.tokenize_and_label_encoding(df)
         print(tokens)

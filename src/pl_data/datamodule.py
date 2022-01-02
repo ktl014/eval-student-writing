@@ -94,16 +94,35 @@ class MyDataModule(pl.LightningDataModule):
 
         # Split val to last 20%
         self.val_dataset = load_dataset(
-            'csv',
-            data_files={
-                'train': self.datasets.train.path
-            },
-            split='train[-20%:]')
+            "csv", data_files={"train": self.datasets.train.path}, split="train[-20%:]"
+        )
 
         # Save all unique labels
         dset_df = pd.read_csv(self.datasets.train.path)
         unique_labels = list(dset_df["discourse_type"].unique())
         self.labels = ClassLabel(names=unique_labels)
+
+    def tokenize(self, example):
+        """Tokenize features
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.tokenize_and_label_encoding(my_dataset.train_dataset)
+
+        Args:
+            example (datasets.Dataset): dataset
+
+        Returns:
+            tokens (transformers.BatchEncoding): tokenized dataset
+        """
+        tokens = self.tokenizer(
+            example["discourse_text"],
+            truncation=True,
+            padding="max_length",
+            max_length=512,
+        )
+        return tokens
 
     def tokenize_and_label_encoding(self, example):
         """Tokenize features and encode label
@@ -161,10 +180,14 @@ class MyDataModule(pl.LightningDataModule):
             )
 
         # if stage is None or stage == "test":
-        #     self.test_datasets = [
-        #         hydra.utils.instantiate(dataset_cfg)
-        #         for dataset_cfg in self.datasets.test
-        #     ]
+        #     self.test_datasets = self.test_datasets.map(
+        #         self.tokenize(self.tokenize)
+        #     )
+        #     self.test_datasets.set_format(
+        #         type="torch",
+        #         columns=["input_ids", "attention_mask"],
+        #         output_all_columns=True,
+        #     )
 
     def train_dataloader(self) -> DataLoader:
         """Apply DataLoader on train dataset - shuffle, batch_size, and workers
@@ -214,16 +237,14 @@ class MyDataModule(pl.LightningDataModule):
         Returns:
             Sequence[DataLoader]: return a Sequence of size = len(test_dataset) / batch_size
         """
-        return [
-            DataLoader(
-                dataset,
+        return DataLoader(
+                self.test_dataset,
                 shuffle=False,
                 batch_size=self.batch_size.test,
                 num_workers=self.num_workers.test,
                 worker_init_fn=worker_init_fn,
-            )
-            for dataset in self.test_datasets
-        ]
+        )
+
 
     def __repr__(self) -> str:
         return (
