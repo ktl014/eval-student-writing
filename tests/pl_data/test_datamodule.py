@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pytest
 import hydra
-from hydra import compose, initialize
+from hydra import compose
 import pandas as pd
 import omegaconf
 import pytorch_lightning as pl
@@ -14,8 +14,6 @@ import pytorch_lightning as pl
 from src.pl_data import *
 from src.common.utils import PROJECT_ROOT
 
-relative_config_path = '../../conf'
-initialize(config_path=relative_config_path)
 cfg = compose(config_name='default')
 
 class TestDataModule():
