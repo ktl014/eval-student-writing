@@ -1,17 +1,10 @@
 import os
-import sys
-from pathlib import Path
-
 import hydra
 import pandas as pd
 import pytest
 from hydra import compose
-
+from src.common.constants import GenericConstants as gc
 from src.common.utils import PROJECT_ROOT
-
-# print(str(Path(__file__).resolve().parents[0]))
-# sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
-# sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 os.chdir(PROJECT_ROOT)
 
@@ -21,7 +14,6 @@ cfg = compose(config_name="default")
 class TestDataModule:
     @pytest.fixture
     def data_module(self):
-        print(PROJECT_ROOT)
         return hydra.utils.instantiate(cfg.data.datamodule, _recursive_=False)
 
     def test_prepare_data(self, data_module):
@@ -38,7 +30,7 @@ class TestDataModule:
         val_dataset_size = round(row_count * 20 / 100)
 
         # Count number of unique labels
-        num_unique_labels = train_df["discourse_type"].nunique()
+        num_unique_labels = train_df[gc.LABEL].nunique()
 
         # === Trigger output ===#
         data_module.prepare_data()
