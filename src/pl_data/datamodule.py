@@ -250,11 +250,11 @@ class MyDataModule(pl.LightningDataModule):
             size = len(test_dataset) / batch_size
         """
         return DataLoader(
-                self.test_dataset,
-                shuffle=False,
-                batch_size=self.batch_size.test,
-                num_workers=self.num_workers.test,
-                worker_init_fn=worker_init_fn,
+            self.test_dataset,
+            shuffle=False,
+            batch_size=self.batch_size.test,
+            num_workers=self.num_workers.test,
+            worker_init_fn=worker_init_fn,
         )
 
     def __repr__(self) -> str:
