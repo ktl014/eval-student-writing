@@ -42,7 +42,8 @@ class SamplesVisualisationLogger(pl.Callback):
 
         outputs = pl_module(
             val_batch["input_ids"].to(pl_module.device),
-            val_batch["attention_mask"].to(pl_module.device))
+            val_batch["attention_mask"].to(pl_module.device),
+        )
         preds = torch.argmax(outputs.logits, 1)
         labels = val_batch[gc.LABEL]
 
@@ -87,7 +88,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
         )
 
     if "model_checkpoints" in cfg.train:
-        #todo store filename into config
+        # todo store filename into config
         hydra.utils.log.info(f"Adding callback <ModelCheckpoint>")
         callbacks.append(
             ModelCheckpoint(

@@ -24,9 +24,7 @@ def convert_model(cfg):
     logger.info(f"Loading pre-trained model from: {model_path}")
     cola_model = MyModel.load_from_checkpoint(model_path)
 
-    data_model = hydra.utils.instantiate(
-        cfg.data.datamodule, _recursive_=False
-    )
+    data_model = hydra.utils.instantiate(cfg.data.datamodule, _recursive_=False)
     data_model.prepare_data()
     data_model.setup()
     input_batch = next(iter(data_model.train_dataloader()))
