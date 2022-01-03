@@ -1,11 +1,11 @@
 import hydra
 import omegaconf
 import torch
-from omegaconf import DictConfig
 
 from src.common.utils import PROJECT_ROOT
 from src.pl_modules.model import MyModel
 from src.common.constants import GenericConstants as gc
+
 
 class ColaPredictor:
     def __init__(self, model_path):
@@ -14,7 +14,7 @@ class ColaPredictor:
         self.model.eval()
         self.model.freeze()
         self.softmax = torch.nn.Softmax(dim=1)
-        #todo include into the config data the list of labels
+        # todo include into the config data the list of labels
         self.labels = ["Lead", "Position", "Evidence", "Claim",
                        "Concluding Statement", "Counterclaim",
                        "Rebuttal"]
@@ -40,9 +40,9 @@ class ColaPredictor:
 def main(cfg: omegaconf.DictConfig):
     sentence = "In this situation they need someone to guid them through " \
                "the online course, or they can take a home tutour."
-    predictor = ColaPredictor(
-        "C:\Personal_Data/Project_Ideas/Evaluate_Student_Writing/eval"
-        "-student-writing/models/best-checkpoint-v3.ckpt")
+    predictor = ColaPredictor("C:/Personal_Data/Project_Ideas/"
+                              "Evaluate_Student_Writing/eval-student-writing/"
+                              "models/best-checkpoint-v3.ckpt")
     predictor.set_up(
         datamodule=hydra.utils.instantiate(cfg.data.datamodule)
     )

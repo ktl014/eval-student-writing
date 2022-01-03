@@ -1,6 +1,4 @@
 import os
-import sys
-from pathlib import Path
 
 import hydra
 import pytest
@@ -11,10 +9,6 @@ from hydra import compose
 from src.common.constants import GenericConstants as gc
 from src.common.utils import PROJECT_ROOT
 
-# print(str(Path(__file__).resolve().parents[0]))
-# sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
-# sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-#
 os.chdir(PROJECT_ROOT)
 
 cfg = compose(config_name="default")

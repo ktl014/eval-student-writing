@@ -96,7 +96,7 @@ def log_hyperparameters(
 load_envs()
 
 # Set the cwd to the project root
-#PROJECT_ROOT: Path = Path(get_env("PROJECT_ROOT"))
+# PROJECT_ROOT: Path = Path(get_env("PROJECT_ROOT"))
 PROJECT_ROOT: Path = Path(os.getcwd())
 assert (
     PROJECT_ROOT.exists()

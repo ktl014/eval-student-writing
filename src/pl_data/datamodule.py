@@ -1,9 +1,7 @@
-import os
 import random
 from typing import Optional, Sequence
 
 import hydra
-import os
 import numpy as np
 import omegaconf
 import pandas as pd
@@ -253,7 +251,6 @@ class MyDataModule(pl.LightningDataModule):
                 num_workers=self.num_workers.test,
                 worker_init_fn=worker_init_fn,
         )
-
 
     def __repr__(self) -> str:
         return (

@@ -6,7 +6,6 @@ USAGE
 
 """
 
-import os
 from pathlib import Path
 from typing import List
 
@@ -110,7 +109,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
         )
 
     if "model_checkpoints" in cfg.train:
-        #todo store filename into config
+        # todo store filename into config
         hydra.utils.log.info("Adding callback <ModelCheckpoint>")
         callbacks.append(
             ModelCheckpoint(
@@ -184,7 +183,7 @@ def run(cfg: DictConfig) -> None:
             **wandb_config,
             tags=cfg.core.tags,
         )
-        hydra.utils.log.info("W&B is now " 
+        hydra.utils.log.info("W&B is now "
                              f"watching <{cfg.logging.wandb_watch.log}>!")
         wandb_logger.watch(
             model,
