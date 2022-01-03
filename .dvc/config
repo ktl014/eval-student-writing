@@ -1,4 +1,4 @@
 [core]
-    remote = url
-['remote "url"']
-    url = s3://model-dataset-store
+    remote = myremote
+['remote "myremote"']
+    url = s3://ews-model-dataset-store
