@@ -1,3 +1,4 @@
+import os
 import random
 from typing import Optional, Sequence
 
@@ -84,11 +85,13 @@ class MyDataModule(pl.LightningDataModule):
         Returns:
 
         """
+        train_path = os.path.join(PROJECT_ROOT, self.datasets.train.path)
+        print(train_path)
         # Split train to first 80%
         self.train_datasets = load_dataset(
             "csv",
             data_files={
-                "train": self.datasets.train.path,
+                "train": train_path
             },
             split="train[:80%]",
         )
@@ -96,12 +99,14 @@ class MyDataModule(pl.LightningDataModule):
         # Split val to last 20%
         self.val_datasets = load_dataset(
             "csv",
-            data_files={"train": self.datasets.train.path},
+            data_files={
+                "train": train_path
+            },
             split="train[-20%:]"
         )
 
         # Save all unique labels
-        dset_df = pd.read_csv(self.datasets.train.path)
+        dset_df = pd.read_csv(train_path)
         unique_labels = list(dset_df["discourse_type"].unique())
         self.labels = ClassLabel(names=unique_labels)
 
@@ -123,7 +128,7 @@ class MyDataModule(pl.LightningDataModule):
             example["discourse_text"],
             truncation=True,
             padding="max_length",
-            max_length=512,
+            max_length=self.max_length,
         )
         return tokens
 
@@ -146,7 +151,7 @@ class MyDataModule(pl.LightningDataModule):
             example["discourse_text"],
             truncation=True,
             padding="max_length",
-            max_length=512,
+            max_length=self.max_length,
         )
         tokens["discourse_type"] = self.labels.str2int(example[gc.LABEL])
         return tokens

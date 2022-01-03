@@ -35,4 +35,3 @@ jobs:
           pip install coverage
           coverage run --source=. -m pytest
           coverage report -m
-          coverage html
