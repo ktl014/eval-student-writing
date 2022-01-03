@@ -2,9 +2,9 @@ import hydra
 import omegaconf
 import torch
 
+from src.common.constants import GenericConstants as gc
 from src.common.utils import PROJECT_ROOT
 from src.pl_modules.model import MyModel
-from src.common.constants import GenericConstants as gc
 
 
 class ColaPredictor:
