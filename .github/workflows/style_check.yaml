@@ -1,4 +1,4 @@
-name: Python Lint
+name: Style-Check
 
 on: [push, pull_request]
 
