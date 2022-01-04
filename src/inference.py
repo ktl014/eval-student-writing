@@ -93,10 +93,17 @@ class EWSONNXPredictor(BasePredictor):
         self.inference_sample[gc.SENTENCE] = text
         processed = self.processor.tokenize(self.inference_sample)
 
+        # print(f"\n****** {processed} ******")
+
         ort_inputs = {
-            "input_ids": np.expand_dims(processed["input_ids"], axis=0),
-            "attention_mask": np.expand_dims(processed["attention_mask"], axis=0),
+            "input_ids": np.expand_dims(processed["input_ids"],
+                                        axis=0
+                                        ).astype("int64"),
+            "attention_mask": np.expand_dims(processed["attention_mask"],
+                                             axis=0
+                                             ).astype("int64"),
         }
+
         ort_outs = self.ort_session.run(None, ort_inputs)
         scores = softmax(ort_outs[0])[0]
         predictions = []
