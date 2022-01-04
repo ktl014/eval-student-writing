@@ -1,13 +1,6 @@
 name: Style-Check
 
-# on: [push, pull_request]
-on:
-  push:
-    branches:
-    - main
-  pull_request:
-    branches:
-    - main
+on: [push, pull_request]
 
 jobs:
   Style-checks:

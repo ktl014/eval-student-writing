@@ -111,7 +111,8 @@ class EWSONNXPredictor(BasePredictor):
 
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
 def main(cfg: omegaconf.DictConfig):
-    sentence = "In this situation they need someone to guid them through the online course, or they can take a home tutour."
+    sentence = "In this situation they need someone to guid them " \
+               "through the online course, or they can take a home tutour."
     root_dir = hydra.utils.get_original_cwd()
 
     # Instantiate predictor
@@ -131,7 +132,8 @@ def main(cfg: omegaconf.DictConfig):
     # Run predictions
     logger.info(f"MODEL_LOADED: {model_path}")
     logger.info(f"INPUT: {sentence}")
-    logger.info(f"OUTPUT (see below):\n{tabulate(predictor.predict(sentence))}")
+    logger.info(f"OUTPUT (see below):\n"
+                f"{tabulate(predictor.predict(sentence))}")
 
 
 if __name__ == "__main__":

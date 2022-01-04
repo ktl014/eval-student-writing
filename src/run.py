@@ -6,7 +6,6 @@ USAGE
 
 """
 
-import os
 from pathlib import Path
 from typing import List
 
@@ -58,7 +57,8 @@ class SamplesVisualisationLogger(pl.Callback):
         wrong_df = df[df[gc.LABEL] != df["Predicted"]]
         trainer.logger.experiment.log(
             {
-                "examples": wandb.Table(dataframe=wrong_df, allow_mixed_types=True),
+                "examples": wandb.Table(dataframe=wrong_df,
+                                        allow_mixed_types=True),
                 "global_step": trainer.global_step,
             }
         )
@@ -68,7 +68,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
     callbacks: List[Callback] = []
 
     if "lr_monitor" in cfg.logging:
-        hydra.utils.log.info(f"Adding callback <LearningRateMonitor>")
+        hydra.utils.log.info("Adding callback <LearningRateMonitor>")
         callbacks.append(
             LearningRateMonitor(
                 logging_interval=cfg.logging.lr_monitor.logging_interval,
@@ -77,7 +77,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
         )
 
     if "early_stopping" in cfg.train:
-        hydra.utils.log.info(f"Adding callback <EarlyStopping>")
+        hydra.utils.log.info("Adding callback <EarlyStopping>")
         callbacks.append(
             EarlyStopping(
                 monitor=cfg.train.monitor_metric,
@@ -89,7 +89,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
 
     if "model_checkpoints" in cfg.train:
         # todo store filename into config
-        hydra.utils.log.info(f"Adding callback <ModelCheckpoint>")
+        hydra.utils.log.info("Adding callback <ModelCheckpoint>")
         callbacks.append(
             ModelCheckpoint(
                 dirpath=str(PROJECT_ROOT / "models"),
@@ -102,7 +102,7 @@ def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
         )
 
     if "sample_visualisation" in cfg.train:
-        hydra.utils.log.info(f"Adding callback <SamplesVisualisationLogger>")
+        hydra.utils.log.info("Adding callback <SamplesVisualisationLogger>")
         callbacks.append(SamplesVisualisationLogger(datamodule))
 
     return callbacks
@@ -156,13 +156,14 @@ def run(cfg: DictConfig) -> None:
     # Logger instantiation/configuration
     wandb_logger = None
     if "wandb" in cfg.logging:
-        hydra.utils.log.info(f"Instantiating <WandbLogger>")
+        hydra.utils.log.info("Instantiating <WandbLogger>")
         wandb_config = cfg.logging.wandb
         wandb_logger = WandbLogger(
             **wandb_config,
             tags=cfg.core.tags,
         )
-        hydra.utils.log.info(f"W&B is now watching <{cfg.logging.wandb_watch.log}>!")
+        hydra.utils.log.info("W&B is now watching "
+                             f"<{cfg.logging.wandb_watch.log}>!")
         wandb_logger.watch(
             model,
             log=cfg.logging.wandb_watch.log,
@@ -173,7 +174,7 @@ def run(cfg: DictConfig) -> None:
     yaml_conf: str = OmegaConf.to_yaml(cfg=cfg)
     (Path(wandb_logger.experiment.dir) / "hparams.yaml").write_text(yaml_conf)
 
-    hydra.utils.log.info(f"Instantiating the Trainer")
+    hydra.utils.log.info("Instantiating the Trainer")
 
     # The Lightning core, the Trainer
     trainer = pl.Trainer(
@@ -187,10 +188,10 @@ def run(cfg: DictConfig) -> None:
     )
     log_hyperparameters(trainer=trainer, model=model, cfg=cfg)
 
-    hydra.utils.log.info(f"Starting training!")
+    hydra.utils.log.info("Starting training!")
     trainer.fit(model=model, datamodule=datamodule)
 
-    hydra.utils.log.info(f"Starting testing!")
+    hydra.utils.log.info("Starting testing!")
     # trainer.test(datamodule=datamodule)
 
     # Logger closing to release resources/avoid multi-run conflicts
