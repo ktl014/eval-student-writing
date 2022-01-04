@@ -7,6 +7,8 @@ hydra-core==1.1.1
 wandb==0.10.23
 streamlit==0.79.0
 onnxruntime==1.10.0
+datasets
+transformers
 # hydra-joblib-launcher
 
 # Stable stuff usually backward compatible

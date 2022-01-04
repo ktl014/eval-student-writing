@@ -86,7 +86,6 @@ class MyDataModule(pl.LightningDataModule):
 
         """
         train_path = os.path.join(PROJECT_ROOT, self.datasets.train.path)
-        print(train_path)
         # Split train to first 80%
         self.train_datasets = load_dataset(
             "csv",

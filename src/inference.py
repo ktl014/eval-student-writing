@@ -92,9 +92,6 @@ class EWSONNXPredictor(BasePredictor):
     def predict(self, text):
         self.inference_sample[gc.SENTENCE] = text
         processed = self.processor.tokenize(self.inference_sample)
-
-        # print(f"\n****** {processed} ******")
-
         ort_inputs = {
             "input_ids": np.expand_dims(processed["input_ids"],
                                         axis=0
