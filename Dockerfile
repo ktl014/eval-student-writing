@@ -13,6 +13,11 @@ ENV PROJECT_ROOT=/app
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+
+RUN cat .dvc/config
+# pulling the trained model
+RUN dvc pull models/model.onnx.dvc
+
 ENV PYTHONPATH "${PYTHONPATH}:./"
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
