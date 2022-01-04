@@ -6,9 +6,6 @@ jobs:
   Unit-testing:
     runs-on: ubuntu-latest
 
-    # runs within your Docker container
-    container:
-      image: docker://<hub-username>/<repo-name>:latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
