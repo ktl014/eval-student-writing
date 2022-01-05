@@ -16,10 +16,10 @@ import onnxruntime as ort
 import torch
 from scipy.special import softmax
 from tabulate import tabulate
-
 from src.common.constants import GenericConstants as gc
 from src.common.utils import PROJECT_ROOT
 from src.pl_modules.model import MyModel
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,15 @@ class EWSPredictor(BasePredictor):
         self.model.eval()
         self.model.freeze()
         self.softmax = torch.nn.Softmax(dim=1)
+
+        # todo include into the config data the list of labels
+        self.labels = ["Lead", "Position", "Evidence", "Claim",
+                       "Concluding Statement", "Counterclaim",
+                       "Rebuttal"]
+
+    def set_up(self, datamodule):
+        self.processor = datamodule
+
 
     def predict(self, text):
         self.inference_sample[gc.SENTENCE] = text
