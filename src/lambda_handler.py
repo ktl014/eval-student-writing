@@ -2,9 +2,10 @@
 Lambda wrapper
 """
 
+import json
+
 import hydra
 import omegaconf
-import json
 
 from src.common.utils import PROJECT_ROOT
 from src.inference import EWSONNXPredictor
