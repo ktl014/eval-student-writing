@@ -77,7 +77,6 @@ class EWSPredictor(BasePredictor):
     def set_up(self, datamodule):
         self.processor = datamodule
 
-
     def predict(self, text):
         self.inference_sample[gc.SENTENCE] = text
         processed = self.processor.tokenize(self.inference_sample)
@@ -103,8 +102,10 @@ class EWSONNXPredictor(BasePredictor):
         processed = self.processor.tokenize(self.inference_sample)
 
         ort_inputs = {
-            "input_ids": np.expand_dims(processed["input_ids"], axis=0),
-            "attention_mask": np.expand_dims(processed["attention_mask"], axis=0),
+            "input_ids": np.expand_dims(processed["input_ids"],
+                                        axis=0),
+            "attention_mask": np.expand_dims(processed["attention_mask"],
+                                             axis=0),
         }
         ort_outs = self.ort_session.run(None, ort_inputs)
         scores = softmax(ort_outs[0])[0]
@@ -116,7 +117,8 @@ class EWSONNXPredictor(BasePredictor):
 
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
 def main(cfg: omegaconf.DictConfig):
-    sentence = "In this situation they need someone to guid them through the online course, or they can take a home tutour."
+    sentence = "In this situation they need someone to guid them " \
+               "through the online course, or they can take a home tutour."
     root_dir = hydra.utils.get_original_cwd()
 
     # Instantiate predictor
@@ -136,7 +138,8 @@ def main(cfg: omegaconf.DictConfig):
     # Run predictions
     logger.info(f"MODEL_LOADED: {model_path}")
     logger.info(f"INPUT: {sentence}")
-    logger.info(f"OUTPUT (see below):\n{tabulate(predictor.predict(sentence))}")
+    logger.info("OUTPUT (see below):\n
+                f"{tabulate(predictor.predict(sentence))}")
 
 
 if __name__ == "__main__":
