@@ -16,6 +16,11 @@ RUN apt-get -y update && apt-get install -y libzbar-dev
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+
+# configuring remote server in dvc
+RUN dvc remote add -d myremote s3://ews-model-dataset-store
+
+RUN cat .dvc/config
 # pulling the trained model
 RUN dvc pull models/model.onnx.dvc
 
