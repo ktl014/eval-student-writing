@@ -138,7 +138,7 @@ def main(cfg: omegaconf.DictConfig):
     # Run predictions
     logger.info(f"MODEL_LOADED: {model_path}")
     logger.info(f"INPUT: {sentence}")
-    logger.info("OUTPUT (see below):\n
+    logger.info("OUTPUT (see below):\n"
                 f"{tabulate(predictor.predict(sentence))}")
 
 
