@@ -26,13 +26,15 @@ def lambda_handler(event, context):
     print(event)
 
     if "resource" in event.keys():
-        http_method = event["httpMethod"]
-        if http_method == "GET":
-            sentence = event["queryStringParameters"]["sentence"]
-            return inferencing_instance.predict(sentence)
-        elif http_method == "POST":
-            body = json.loads(event["body"])
-            return inferencing_instance.predict(body["sentence"])
+        body = event["body"]
+        body = json.loads(body)
+        print(f"Got the input: {body['sentence']}")
+        response = inferencing_instance.predict(body["sentence"])
+        return {
+            "statusCode": 200,
+            "headers": {},
+            "body": json.dumps(response)
+        }
     else:
         return inferencing_instance.predict(event["sentence"])
 
@@ -45,7 +47,6 @@ def main(cfg: omegaconf.DictConfig):
     inferencing_instance.set_up(hydra.utils.instantiate(cfg.data.datamodule))
 
     lambda_handler(test, None)
-
 
 
 if __name__ == "__main__":
