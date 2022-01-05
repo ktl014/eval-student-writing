@@ -1,27 +1,34 @@
-FROM python:3.8-slim-buster
-
-COPY ./ /app
-WORKDIR /app
+FROM amazon/aws-lambda-python
 
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
+ARG MODEL_DIR=./models
+RUN mkdir $MODEL_DIR
+
+ENV TRANSFORMERS_CACHE=$MODEL_DIR \
+    TRANSFORMERS_VERBOSITY=error
 
 ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
     AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
-ENV PROJECT_ROOT=/app
+RUN yum install git -y && yum -y install gcc-c++
+# RUN apt-get -y update && apt-get install -y libzbar-dev
 
-RUN apt-get -y update && apt-get install -y libzbar-dev
+COPY requirements.txt requirements.txt
 
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --no-cache-dir
 
-
-# pulling the trained model
-RUN dvc pull models/model.onnx.dvc
+COPY ./ ./
 
 ENV PYTHONPATH "${PYTHONPATH}:./"
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
-EXPOSE 8000
-CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# pulling the trained model
+RUN dvc pull models/model.onnx.dvc
+
+RUN ls
+RUN python lambda_handler.py
+RUN chmod -R 0755 $MODEL_DIR
+CMD [ "lambda_handler.lambda_handler"]
