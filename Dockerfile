@@ -16,7 +16,6 @@ RUN apt-get -y update && apt-get install -y libzbar-dev
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-
 # pulling the trained model
 RUN dvc pull models/model.onnx.dvc
 
