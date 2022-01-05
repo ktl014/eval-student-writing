@@ -16,8 +16,6 @@ RUN apt-get -y update && apt-get install -y libzbar-dev
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# RUN dvc remote modify myremote access_key_id $AWS_ACCESS_KEY_ID
-# RUN dvc remote modify myremote secret_access_key $AWS_SECRET_ACCESS_KEY
 
 # pulling the trained model
 RUN dvc pull models/model.onnx.dvc
