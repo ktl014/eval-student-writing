@@ -9,6 +9,7 @@ streamlit==0.79.0
 onnxruntime==1.10.0
 datasets
 transformers
+tokenizers==0.10.2
 # hydra-joblib-launcher
 
 # Stable stuff usually backward compatible
