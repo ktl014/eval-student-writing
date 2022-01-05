@@ -11,6 +11,8 @@ ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
 
 ENV PROJECT_ROOT=/app
 
+RUN apt-get -y update && apt-get install -y libzbar-dev
+
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
