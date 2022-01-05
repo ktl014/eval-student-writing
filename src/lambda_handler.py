@@ -4,6 +4,7 @@ Lambda wrapper
 
 import hydra
 import omegaconf
+import json
 
 from src.common.utils import PROJECT_ROOT
 from src.inference import EWSONNXPredictor
@@ -23,7 +24,17 @@ def lambda_handler(event, context):
 
     """
     print(event)
-    return inferencing_instance.predict(event["sentence"])
+
+    if "resource" in event.keys():
+        http_method = event["httpMethod"]
+        if http_method == "GET":
+            sentence = event["queryStringParameters"]["sentence"]
+            return inferencing_instance.predict(sentence)
+        elif http_method == "POST":
+            body = json.loads(event["body"])
+            return inferencing_instance.predict(body["sentence"])
+    else:
+        return inferencing_instance.predict(event["sentence"])
 
 
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
