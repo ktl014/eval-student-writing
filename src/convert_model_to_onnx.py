@@ -24,7 +24,7 @@ def convert_model(cfg):
     logger.info(f"Loading pre-trained model from: {model_path}")
     cola_model = MyModel.load_from_checkpoint(model_path)
 
-    data_model = hydra.utils.instantiate(cfg.data.datamodule, 
+    data_model = hydra.utils.instantiate(cfg.data.datamodule,
                                          _recursive_=False)
     data_model.prepare_data()
     data_model.setup()
@@ -43,7 +43,7 @@ def convert_model(cfg):
             input_sample["attention_mask"],
         ),  # model input (or a tuple for multiple inputs)
         # where to save the model (can be a file or file-like object)
-        f"{root_dir}/models/model.onnx",  
+        f"{root_dir}/models/model.onnx",
         export_params=True,
         opset_version=10,
         input_names=["input_ids", "attention_mask"],  # the model's input names
