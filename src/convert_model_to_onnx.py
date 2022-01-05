@@ -24,7 +24,8 @@ def convert_model(cfg):
     logger.info(f"Loading pre-trained model from: {model_path}")
     cola_model = MyModel.load_from_checkpoint(model_path)
 
-    data_model = hydra.utils.instantiate(cfg.data.datamodule, _recursive_=False)
+    data_model = hydra.utils.instantiate(cfg.data.datamodule, 
+                                         _recursive_=False)
     data_model.prepare_data()
     data_model.setup()
     input_batch = next(iter(data_model.train_dataloader()))
@@ -34,14 +35,15 @@ def convert_model(cfg):
     }
 
     # Export the model
-    logger.info(f"Converting the model into ONNX format")
+    logger.info("Converting the model into ONNX format")
     torch.onnx.export(
         cola_model,  # model being run
         (
             input_sample["input_ids"],
             input_sample["attention_mask"],
         ),  # model input (or a tuple for multiple inputs)
-        f"{root_dir}/models/model.onnx",  # where to save the model (can be a file or file-like object)
+        # where to save the model (can be a file or file-like object)
+        f"{root_dir}/models/model.onnx",  
         export_params=True,
         opset_version=10,
         input_names=["input_ids", "attention_mask"],  # the model's input names
@@ -54,7 +56,8 @@ def convert_model(cfg):
     )
 
     logger.info(
-        f"Model converted successfully. ONNX format model is at: {root_dir}/models/model.onnx"
+        "Model converted successfully. ONNX format model "
+        f"is at: {root_dir}/models/model.onnx"
     )
 
 
