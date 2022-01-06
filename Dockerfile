@@ -27,6 +27,7 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY ./ ./
 COPY src/lambda_handler.py ./
+WORKDIR ./
 ENV PROJECT_ROOT=./
 ENV WANDB_DIR=$WANDB_DIR
 ENV WANDB_CONFIG_DIR=$WANDB_CONFIG_DIR
