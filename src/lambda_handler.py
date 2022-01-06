@@ -13,6 +13,11 @@ from src.inference import EWSONNXPredictor
 inferencing_instance = EWSONNXPredictor("./models/model.onnx")
 
 
+@hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
+def init_datamodule(cfg: omegaconf.DictConfig):
+    inferencing_instance.set_up(hydra.utils.instantiate(cfg.data.datamodule))
+
+
 def lambda_handler(event, context):
     """Lambda function handler for predicting discourse type of the given
     sentence
@@ -24,6 +29,7 @@ def lambda_handler(event, context):
     Returns:
 
     """
+    init_datamodule()
     print(event)
 
     if "resource" in event.keys():
@@ -40,12 +46,10 @@ def lambda_handler(event, context):
         return inferencing_instance.predict(event["sentence"])
 
 
-@hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
-def main(cfg: omegaconf.DictConfig):
+def main():
     sentence = "In this situation they need someone to guide them " \
                "through the online course, or they can take a home tutour."
     test = {"sentence": sentence}
-    inferencing_instance.set_up(hydra.utils.instantiate(cfg.data.datamodule))
 
     lambda_handler(test, None)
 

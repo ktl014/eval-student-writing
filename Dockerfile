@@ -44,8 +44,10 @@ RUN chmod -R 0755 $WANDB_CACHE_DIR
 
 RUN chmod -R 0755 ./
 
+
 RUN python -m src.lambda_handler
 RUN chmod -R 0755 $MODEL_DIR
+RUN chmod -R 0755 $WANDB_DIR/wandb
 CMD ["src.lambda_handler.lambda_handler"]
 
 #FROM python:3.8-slim-buster
