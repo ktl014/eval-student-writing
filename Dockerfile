@@ -28,6 +28,6 @@ ENV LANG=C.UTF-8
 RUN dvc pull models/model.onnx.dvc
 
 RUN ls
-RUN python ./src/lambda_handler.py
+RUN python -m src.lambda_handler
 RUN chmod -R 0755 $MODEL_DIR
 CMD [ "lambda_handler.lambda_handler"]
