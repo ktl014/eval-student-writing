@@ -38,16 +38,15 @@ ENV LANG=C.UTF-8
 # pulling the trained model
 RUN dvc pull models/model.onnx.dvc
 
-RUN chmod -R 0755 $WANDB_DIR
-RUN chmod -R 0755 $WANDB_CONFIG_DIR
-RUN chmod -R 0755 $WANDB_CACHE_DIR
+# RUN chmod -R 0755 $WANDB_DIR
+# RUN chmod -R 0755 $WANDB_CONFIG_DIR
+# RUN chmod -R 0755 $WANDB_CACHE_DIR
 
-RUN chmod -R 0755 ./
-
+# RUN chmod -R 0755 ./
 
 RUN python -m src.lambda_handler
 RUN chmod -R 0755 $MODEL_DIR
-RUN chmod -R 0755 $WANDB_DIR/wandb
+# RUN chmod -R 0755 $WANDB_DIR/wandb
 CMD ["src.lambda_handler.lambda_handler"]
 
 #FROM python:3.8-slim-buster
