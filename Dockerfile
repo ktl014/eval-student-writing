@@ -7,7 +7,7 @@ ARG WANDB_DIR=./wandb_dir
 ARG WANDB_CONFIG_DIR=./wandb_config_dir
 ARG WANDB_CACHE_DIR=./wandb_cache_dir
 RUN mkdir $MODEL_DIR
-RUN mkdir $WANDB_DIR/wandb
+RUN mkdir -p $WANDB_DIR/wandb
 RUN mkdir $WANDB_CONFIG_DIR
 RUN mkdir $WANDB_CACHE_DIR
 
