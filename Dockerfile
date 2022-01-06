@@ -26,6 +26,7 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt --no-cache-dir
 
 COPY ./ ./
+COPY src/lambda_handler.py ./
 ENV PROJECT_ROOT=./
 ENV WANDB_DIR=$WANDB_DIR
 ENV WANDB_CONFIG_DIR=$WANDB_CONFIG_DIR
@@ -43,11 +44,12 @@ RUN dvc pull models/model.onnx.dvc
 # RUN chmod -R 0755 $WANDB_CACHE_DIR
 
 # RUN chmod -R 0755 ./
+RUN ls
 
-RUN python -m src.lambda_handler
+RUN python -m lambda_handler
 RUN chmod -R 0755 $MODEL_DIR
 # RUN chmod -R 0755 $WANDB_DIR/wandb
-CMD ["src.lambda_handler.lambda_handler"]
+CMD ["lambda_handler.lambda_handler"]
 
 #FROM python:3.8-slim-buster
 #COPY ./ /app
