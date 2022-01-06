@@ -3,10 +3,18 @@ Lambda wrapper
 """
 
 import json
+import logging
 
 from omegaconf import DictConfig
-from src.pl_data.datamodule import MyDataModule
+
 from src.inference import EWSONNXPredictor
+from src.pl_data.datamodule import MyDataModule
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.DEBUG)
+
+logger.info("Loading the model")
 
 inferencing_instance = EWSONNXPredictor("./models/model.onnx")
 inferencing_instance.set_up(
@@ -29,20 +37,23 @@ def lambda_handler(event, context):
     Returns:
 
     """
-    print(event)
-
     if "resource" in event.keys():
         body = event["body"]
         body = json.loads(body)
-        print(f"Got the input: {body['sentence']}")
+        logger.info(f"Got the input: {body['sentence']}")
+
         response = inferencing_instance.predict(body["sentence"])
+        logger.info(json.dumps(str(response)))
         return {
             "statusCode": 200,
             "headers": {},
-            "body": json.dumps(response)
+            "body": json.dumps(str(response))
         }
     else:
-        return inferencing_instance.predict(event["sentence"])
+        logger.info(f"Got the input: {event['sentence']}")
+        response = inferencing_instance.predict(event["sentence"])
+        logger.info(json.dumps(str(response)))
+        return response
 
 
 def main():
