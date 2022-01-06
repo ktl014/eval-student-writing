@@ -26,12 +26,12 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 # pulling the trained model
-RUN dvc pull models/model.onnx.dvc
+# RUN dvc pull models/model.onnx.dvc
 
 RUN ls
 RUN python -m src.lambda_handler
 RUN chmod -R 0755 $MODEL_DIR
-CMD [ "lambda_handler.lambda_handler"]
+CMD ["./src/lambda_handler.lambda_handler"]
 
 #FROM python:3.8-slim-buster
 #COPY ./ /app
