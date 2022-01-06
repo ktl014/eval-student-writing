@@ -6,19 +6,11 @@ import json
 
 import hydra
 import omegaconf
-from omegaconf import DictConfig
 
+from src.common.utils import PROJECT_ROOT
 from src.inference import EWSONNXPredictor
-from src.pl_data.datamodule import MyDataModule
 
 inferencing_instance = EWSONNXPredictor("./models/model.onnx")
-inferencing_instance.set_up(
-    datamodule=MyDataModule(
-        datasets=None, num_workers=DictConfig({"test": 4}),
-        batch_size=16,
-        max_length=512, tokenizer="google/bert_uncased_L-2_H-512_A-8"
-    )
-)
 
 
 def lambda_handler(event, context):
@@ -48,10 +40,12 @@ def lambda_handler(event, context):
         return inferencing_instance.predict(event["sentence"])
 
 
-def main():
+@hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
+def main(cfg: omegaconf.DictConfig):
     sentence = "In this situation they need someone to guide them " \
                "through the online course, or they can take a home tutour."
     test = {"sentence": sentence}
+    inferencing_instance.set_up(hydra.utils.instantiate(cfg.data.datamodule))
 
     lambda_handler(test, None)
 
