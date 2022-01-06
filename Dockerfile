@@ -26,7 +26,7 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 # pulling the trained model
-# RUN dvc pull models/model.onnx.dvc
+RUN dvc pull models/model.onnx.dvc
 
 RUN ls
 RUN python -m src.lambda_handler
