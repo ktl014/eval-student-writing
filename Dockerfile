@@ -12,7 +12,6 @@ ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
     AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
 RUN yum install git -y && yum -y install gcc-c++
-# RUN apt-get -y update && apt-get install -y libzbar-dev
 
 COPY requirements.txt requirements.txt
 
@@ -31,4 +30,4 @@ RUN dvc pull models/model.onnx.dvc
 RUN ls
 RUN python lambda_handler.py
 RUN chmod -R 0755 $MODEL_DIR
-CMD [ "lambda_handler.lambda_handler"]
+CMD [ "src/lambda_handler.lambda_handler"]
