@@ -31,7 +31,7 @@ RUN dvc pull models/model.onnx.dvc
 RUN ls
 RUN python -m src.lambda_handler
 RUN chmod -R 0755 $MODEL_DIR
-CMD ["./src/lambda_handler.lambda_handler"]
+CMD ["src.lambda_handler.lambda_handler"]
 
 #FROM python:3.8-slim-buster
 #COPY ./ /app
