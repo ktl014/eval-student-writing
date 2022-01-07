@@ -27,24 +27,12 @@ from src.common.utils import PROJECT_ROOT, log_hyperparameters
 
 
 class SamplesVisualisationLogger(pl.Callback):
-    """Visualize loggers on weight & biases"""
-
     def __init__(self, datamodule):
         super().__init__()
 
         self.datamodule = datamodule
 
     def on_validation_end(self, trainer, pl_module):
-        """Put together predictions, labels, and sentence in a dataframe
-        and visualize on weight & biases
-
-        Args:
-            trainer:
-            pl_module:
-
-        Returns:
-
-        """
         val_batch = next(iter(self.datamodule.val_dataloader()))
         sentences = val_batch[gc.SENTENCE]
 
@@ -55,7 +43,7 @@ class SamplesVisualisationLogger(pl.Callback):
         preds = torch.argmax(outputs.logits, 1)
         labels = val_batch[gc.LABEL]
 
-        dataframe = pd.DataFrame(
+        df = pd.DataFrame(
             {
                 gc.SENTENCE: sentences,
                 gc.LABEL: labels.cpu().numpy(),
@@ -63,7 +51,7 @@ class SamplesVisualisationLogger(pl.Callback):
             }
         )
 
-        wrong_df = dataframe[dataframe[gc.LABEL] != dataframe["Predicted"]]
+        wrong_df = df[df[gc.LABEL] != df["Predicted"]]
         trainer.logger.experiment.log(
             {
                 "examples": wandb.Table(dataframe=wrong_df,
@@ -74,15 +62,6 @@ class SamplesVisualisationLogger(pl.Callback):
 
 
 def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
-    """Build call backs for model
-
-    Args:
-        cfg:
-        datamodule:
-
-    Returns:
-
-    """
     callbacks: List[Callback] = []
 
     if "lr_monitor" in cfg.logging:
@@ -138,7 +117,7 @@ def run(cfg: DictConfig) -> None:
     if cfg.train.pl_trainer.fast_dev_run:
         hydra.utils.log.info(
             f"Debug mode <{cfg.train.pl_trainer.fast_dev_run=}>. "
-            "Forcing debugger friendly configuration!"
+            f"Forcing debugger friendly configuration!"
         )
         # Debuggers don't like GPUs nor multiprocessing
         cfg.train.pl_trainer.gpus = 0
@@ -180,8 +159,8 @@ def run(cfg: DictConfig) -> None:
             **wandb_config,
             tags=cfg.core.tags,
         )
-        hydra.utils.log.info("W&B is now "
-                             f"watching <{cfg.logging.wandb_watch.log}>!")
+        hydra.utils.log.info("W&B is now watching "
+                             f"<{cfg.logging.wandb_watch.log}>!")
         wandb_logger.watch(
             model,
             log=cfg.logging.wandb_watch.log,
@@ -219,7 +198,6 @@ def run(cfg: DictConfig) -> None:
 
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
 def main(cfg: omegaconf.DictConfig):
-    """Execute script"""
     run(cfg)
 
 

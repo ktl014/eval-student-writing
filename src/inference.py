@@ -16,10 +16,10 @@ import onnxruntime as ort
 import torch
 from scipy.special import softmax
 from tabulate import tabulate
+
 from src.common.constants import GenericConstants as gc
 from src.common.utils import PROJECT_ROOT
 from src.pl_modules.model import MyModel
-
 
 logger = logging.getLogger(__name__)
 
@@ -69,14 +69,6 @@ class EWSPredictor(BasePredictor):
         self.model.freeze()
         self.softmax = torch.nn.Softmax(dim=1)
 
-        # todo include into the config data the list of labels
-        self.labels = ["Lead", "Position", "Evidence", "Claim",
-                       "Concluding Statement", "Counterclaim",
-                       "Rebuttal"]
-
-    def set_up(self, datamodule):
-        self.processor = datamodule
-
     def predict(self, text):
         self.inference_sample[gc.SENTENCE] = text
         processed = self.processor.tokenize(self.inference_sample)
@@ -100,13 +92,15 @@ class EWSONNXPredictor(BasePredictor):
     def predict(self, text):
         self.inference_sample[gc.SENTENCE] = text
         processed = self.processor.tokenize(self.inference_sample)
-
         ort_inputs = {
             "input_ids": np.expand_dims(processed["input_ids"],
-                                        axis=0),
+                                        axis=0
+                                        ).astype("int64"),
             "attention_mask": np.expand_dims(processed["attention_mask"],
-                                             axis=0),
+                                             axis=0
+                                             ).astype("int64"),
         }
+
         ort_outs = self.ort_session.run(None, ort_inputs)
         scores = softmax(ort_outs[0])[0]
         predictions = []

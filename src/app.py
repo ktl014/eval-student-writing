@@ -6,8 +6,9 @@ Usage
 
 """
 
-from functools import singledispatch
+
 import json
+from functools import singledispatch
 
 import numpy as np
 from fastapi import FastAPI

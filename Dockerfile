@@ -1,4 +1,4 @@
-FROM huggingface/transformers-pytorch-cpu:latest
+FROM python:3.8-slim-buster
 
 COPY ./ /app
 WORKDIR /app
@@ -11,8 +11,14 @@ ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
 
 ENV PROJECT_ROOT=/app
 
+RUN apt-get -y update && apt-get install -y libzbar-dev
+
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+
+# pulling the trained model
+RUN dvc pull models/model.onnx.dvc
+
 ENV PYTHONPATH "${PYTHONPATH}:./"
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
