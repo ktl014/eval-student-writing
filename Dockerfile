@@ -32,6 +32,16 @@ ENV PROJECT_ROOT=./
 ENV WANDB_DIR=$WANDB_DIR
 ENV WANDB_CONFIG_DIR=$WANDB_CONFIG_DIR
 ENV WANDB_CACHE_DIR=$WANDB_CACHE_DIR
+=======
+ENV PROJECT_ROOT=/app
+
+RUN apt-get -y update && apt-get install -y libzbar-dev
+
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# pulling the trained model
+RUN dvc pull models/model.onnx.dvc
 
 ENV PYTHONPATH "${PYTHONPATH}:./"
 ENV LC_ALL=C.UTF-8
