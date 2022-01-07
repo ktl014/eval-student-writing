@@ -10,6 +10,7 @@ onnxruntime==1.10.0
 scikit-learn==1.0.1
 datasets
 transformers
+tokenizers==0.10.2
 # hydra-joblib-launcher
 
 # Stable stuff usually backward compatible
