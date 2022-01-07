@@ -1,9 +1,14 @@
-from locust import HttpUser, task, between
+"""
+Stress Test AWS Lambda server through API Gateway
+"""
 import json
+
+from locust import HttpUser, between, task
 
 # Loading the test JSON data
 with open('test_sample.json') as f:
     test_data = json.loads(f.read())
+
 
 # Creating an API User class inheriting from Locust's HttpUser class
 class APIUser(HttpUser):
@@ -16,4 +21,3 @@ class APIUser(HttpUser):
     @task()
     def predict_endpoint(self):
         self.client.post('/Deploy/predict', json=test_data)
-
