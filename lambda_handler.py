@@ -4,8 +4,8 @@ Lambda wrapper
 
 import json
 import logging
-import numpy as np
 
+import numpy as np
 from omegaconf import DictConfig
 
 from src.inference import EWSONNXPredictor
