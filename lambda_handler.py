@@ -42,18 +42,19 @@ def lambda_handler(event, context):
         body = json.loads(body)
         logger.info(f"Got the input: {body['sentence']}")
 
-        response = inferencing_instance.predict(body["sentence"])
-        logger.info(json.dumps(str(response)))
-        return {
+        prediction = inferencing_instance.predict(body["sentence"])
+        logger.info(json.dumps(str(prediction)))
+        response = {
             "statusCode": 200,
             "headers": {},
-            "body": json.dumps(str(response))
+            "body": json.dumps(prediction)
         }
+        return response
     else:
         logger.info(f"Got the input: {event['sentence']}")
-        response = inferencing_instance.predict(event["sentence"])
-        logger.info(json.dumps(str(response)))
-        return response
+        prediction = inferencing_instance.predict(event["sentence"])
+        logger.info(json.dumps(str(prediction)))
+        return prediction
 
 
 def main():
