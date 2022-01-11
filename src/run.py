@@ -1,28 +1,111 @@
-import os
+"""
+
+USAGE
+# edit `conf/train/default.yaml`
+>>> python3 -m src.run
+
+"""
+
 from pathlib import Path
 from typing import List
 
 import hydra
 import omegaconf
+import pandas as pd
 import pytorch_lightning as pl
+import torch
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning import seed_everything, Callback
-from pytorch_lightning.callbacks import (
-    EarlyStopping,
-    LearningRateMonitor,
-    ModelCheckpoint,
-)
+from pytorch_lightning import Callback, seed_everything
+from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor,
+                                         ModelCheckpoint)
 from pytorch_lightning.loggers import WandbLogger
 
-from src.common.utils import log_hyperparameters, PROJECT_ROOT
+import wandb
+from src.common.constants import GenericConstants as gc
+from src.common.utils import PROJECT_ROOT
+
+STATS_KEY: str = "stats"
 
 
-def build_callbacks(cfg: DictConfig) -> List[Callback]:
+# Adapted from https://github.com/hobogalaxy/lightning-hydra-template/blob
+# /6bf03035107e12568e3e576e82f83da0f91d6a11/src/utils/template_utils.py#L125
+def log_hyperparameters(
+    cfg: DictConfig,
+    model: pl.LightningModule,
+    trainer: pl.Trainer,
+) -> None:
+    """This method controls which parameters from Hydra
+        config are saved by Lightning loggers.
+    Additionally saves:
+        - sizes of train, val, test dataset
+        - number of trainable model parameters
+    Args:
+        cfg (DictConfig): [description]
+        model (pl.LightningModule): [description]
+        trainer (pl.Trainer): [description]
+    """
+    hparams = OmegaConf.to_container(cfg, resolve=True)
+
+    # save number of model parameters
+    hparams[f"{STATS_KEY}/params_total"] = sum(p.numel()
+                                               for p in model.parameters())
+    hparams[f"{STATS_KEY}/params_trainable"] = sum(
+        p.numel() for p in model.parameters() if p.requires_grad
+    )
+    hparams[f"{STATS_KEY}/params_not_trainable"] = sum(
+        p.numel() for p in model.parameters() if not p.requires_grad
+    )
+
+    # send hparams to all loggers
+    trainer.logger.log_hyperparams(hparams)
+
+    # disable logging any more hyperparameters for all loggers
+    # (this is just a trick to prevent trainer from logging hparams of model,
+    # since we already did that above)
+    trainer.logger.log_hyperparams = lambda params: None
+
+
+class SamplesVisualisationLogger(pl.Callback):
+    def __init__(self, datamodule):
+        super().__init__()
+
+        self.datamodule = datamodule
+
+    def on_validation_end(self, trainer, pl_module):
+        val_batch = next(iter(self.datamodule.val_dataloader()))
+        sentences = val_batch[gc.SENTENCE]
+
+        outputs = pl_module(
+            val_batch["input_ids"].to(pl_module.device),
+            val_batch["attention_mask"].to(pl_module.device),
+        )
+        preds = torch.argmax(outputs.logits, 1)
+        labels = val_batch[gc.LABEL]
+
+        df = pd.DataFrame(
+            {
+                gc.SENTENCE: sentences,
+                gc.LABEL: labels.cpu().numpy(),
+                "Predicted": preds.cpu().numpy(),
+            }
+        )
+
+        wrong_df = df[df[gc.LABEL] != df["Predicted"]]
+        trainer.logger.experiment.log(
+            {
+                "examples": wandb.Table(dataframe=wrong_df,
+                                        allow_mixed_types=True),
+                "global_step": trainer.global_step,
+            }
+        )
+
+
+def build_callbacks(cfg: DictConfig, datamodule) -> List[Callback]:
     callbacks: List[Callback] = []
 
     if "lr_monitor" in cfg.logging:
-        hydra.utils.log.info(f"Adding callback <LearningRateMonitor>")
+        hydra.utils.log.info("Adding callback <LearningRateMonitor>")
         callbacks.append(
             LearningRateMonitor(
                 logging_interval=cfg.logging.lr_monitor.logging_interval,
@@ -31,7 +114,7 @@ def build_callbacks(cfg: DictConfig) -> List[Callback]:
         )
 
     if "early_stopping" in cfg.train:
-        hydra.utils.log.info(f"Adding callback <EarlyStopping>")
+        hydra.utils.log.info("Adding callback <EarlyStopping>")
         callbacks.append(
             EarlyStopping(
                 monitor=cfg.train.monitor_metric,
@@ -42,15 +125,22 @@ def build_callbacks(cfg: DictConfig) -> List[Callback]:
         )
 
     if "model_checkpoints" in cfg.train:
-        hydra.utils.log.info(f"Adding callback <ModelCheckpoint>")
+        # todo store filename into config
+        hydra.utils.log.info("Adding callback <ModelCheckpoint>")
         callbacks.append(
             ModelCheckpoint(
+                dirpath=str(PROJECT_ROOT / "models"),
+                filename="best-checkpoint",
                 monitor=cfg.train.monitor_metric,
                 mode=cfg.train.monitor_metric_mode,
                 save_top_k=cfg.train.model_checkpoints.save_top_k,
                 verbose=cfg.train.model_checkpoints.verbose,
             )
         )
+
+    if "sample_visualisation" in cfg.train:
+        hydra.utils.log.info("Adding callback <SamplesVisualisationLogger>")
+        callbacks.append(SamplesVisualisationLogger(datamodule))
 
     return callbacks
 
@@ -88,9 +178,9 @@ def run(cfg: DictConfig) -> None:
     )
 
     # Instantiate model
-    hydra.utils.log.info(f"Instantiating <{cfg.model._target_}>")
+    hydra.utils.log.info(f"Instantiating <{cfg.model.modelmodule._target_}>")
     model: pl.LightningModule = hydra.utils.instantiate(
-        cfg.model,
+        cfg.model.modelmodule,
         optim=cfg.optim,
         data=cfg.data,
         logging=cfg.logging,
@@ -98,18 +188,19 @@ def run(cfg: DictConfig) -> None:
     )
 
     # Instantiate the callbacks
-    callbacks: List[Callback] = build_callbacks(cfg=cfg)
+    callbacks: List[Callback] = build_callbacks(cfg=cfg, datamodule=datamodule)
 
     # Logger instantiation/configuration
     wandb_logger = None
     if "wandb" in cfg.logging:
-        hydra.utils.log.info(f"Instantiating <WandbLogger>")
+        hydra.utils.log.info("Instantiating <WandbLogger>")
         wandb_config = cfg.logging.wandb
         wandb_logger = WandbLogger(
             **wandb_config,
             tags=cfg.core.tags,
         )
-        hydra.utils.log.info(f"W&B is now watching <{cfg.logging.wandb_watch.log}>!")
+        hydra.utils.log.info("W&B is now watching "
+                             f"<{cfg.logging.wandb_watch.log}>!")
         wandb_logger.watch(
             model,
             log=cfg.logging.wandb_watch.log,
@@ -120,7 +211,7 @@ def run(cfg: DictConfig) -> None:
     yaml_conf: str = OmegaConf.to_yaml(cfg=cfg)
     (Path(wandb_logger.experiment.dir) / "hparams.yaml").write_text(yaml_conf)
 
-    hydra.utils.log.info(f"Instantiating the Trainer")
+    hydra.utils.log.info("Instantiating the Trainer")
 
     # The Lightning core, the Trainer
     trainer = pl.Trainer(
@@ -134,11 +225,11 @@ def run(cfg: DictConfig) -> None:
     )
     log_hyperparameters(trainer=trainer, model=model, cfg=cfg)
 
-    hydra.utils.log.info(f"Starting training!")
+    hydra.utils.log.info("Starting training!")
     trainer.fit(model=model, datamodule=datamodule)
 
-    hydra.utils.log.info(f"Starting testing!")
-    trainer.test(datamodule=datamodule)
+    hydra.utils.log.info("Starting testing!")
+    # trainer.test(datamodule=datamodule)
 
     # Logger closing to release resources/avoid multi-run conflicts
     if wandb_logger is not None:

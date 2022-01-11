@@ -1,22 +1,23 @@
+import os
 import random
 from typing import Optional, Sequence
 
-import os
 import hydra
 import numpy as np
-import pandas as pd
 import omegaconf
+import pandas as pd
 import pytorch_lightning as pl
 import torch
+from datasets import ClassLabel, load_dataset
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader, Dataset
-from datasets import load_dataset, ClassLabel
 from transformers import AutoTokenizer
 
+from src.common.constants import GenericConstants as gc
 from src.common.utils import PROJECT_ROOT
 
 
-def worker_init_fn(id: int):
+def worker_init_fn(worker_id: int):
     """
     DataLoaders workers init function.
 
@@ -35,6 +36,8 @@ def worker_init_fn(id: int):
 
 
 class MyDataModule(pl.LightningDataModule):
+    """Build data module"""
+
     def __init__(
         self,
         datasets: DictConfig,
@@ -51,10 +54,12 @@ class MyDataModule(pl.LightningDataModule):
 
         Args:
             datasets (DictConfig): dataset contains train, val and test
-            num_workers (DictConfig): number of thread/processes working parallel
+            num_workers (DictConfig): number of thread/processes
+               working parallel
             batch_size (DictConfig): batch size for train, val and test
             tokenizer (str): model's name
-            max_length (int): max number of word per line (BERT can store max 512 words per line)
+            max_length (int): max number of word per line (BERT can store
+               max 512 words per line)
         """
         super().__init__()
         self.datasets = datasets
@@ -63,12 +68,14 @@ class MyDataModule(pl.LightningDataModule):
         self.max_length = max_length
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
 
-        self.train_dataset: Optional[Dataset] = None
+        self.labels: int = 0
+        self.train_datasets: Optional[Dataset] = None
         self.val_datasets: Optional[Sequence[Dataset]] = None
         self.test_datasets: Optional[Sequence[Dataset]] = None
 
     def prepare_data(self) -> None:
         """Load dataset and split 80-train and 20-validation
+
 
         Usage:
         >>> from src.pl_data.datamodule import MyDataModule
@@ -78,31 +85,32 @@ class MyDataModule(pl.LightningDataModule):
         Returns:
 
         """
+        train_path = os.path.join(PROJECT_ROOT, self.datasets.train.path)
         # Split train to first 80%
-        self.train_dataset = load_dataset(
+        self.train_datasets = load_dataset(
             "csv",
             data_files={
-                "train": self.datasets.train.path,
+                "train": train_path
             },
-            split='train[:80%]'
+            split="train[:80%]",
         )
 
         # Split val to last 20%
-        self.val_dataset = load_dataset(
-            'csv',
+        self.val_datasets = load_dataset(
+            "csv",
             data_files={
-                'train': self.datasets.train.path
+                "train": train_path
             },
-            split='train[-20%:]')
-        # print(f"train size: {len(self.train_dataset)} --- val size: {len(self.val_dataset)}")
+            split="train[-20%:]"
+        )
 
         # Save all unique labels
-        dset_df = pd.read_csv(self.datasets.train.path)
-        unique_labels = list(dset_df['discourse_type'].unique())
+        dset_df = pd.read_csv(train_path)
+        unique_labels = list(dset_df["discourse_type"].unique())
         self.labels = ClassLabel(names=unique_labels)
 
-    def tokenize_and_label_encoding(self, example):
-        """ Tokenize features and encode label
+    def tokenize(self, example):
+        """Tokenize features
 
         Usage:
         >>> from src.pl_data.datamodule import MyDataModule
@@ -113,7 +121,7 @@ class MyDataModule(pl.LightningDataModule):
             example (datasets.Dataset): dataset
 
         Returns:
-            tokens (transformers.BatchEncoding): tokenized and label-encoded dataset
+            tokens (transformers.BatchEncoding): tokenized dataset
         """
         tokens = self.tokenizer(
             example["discourse_text"],
@@ -121,7 +129,30 @@ class MyDataModule(pl.LightningDataModule):
             padding="max_length",
             max_length=self.max_length,
         )
-        tokens['discourse_type'] = self.labels.str2int(example['discourse_type'])
+        return tokens
+
+    def tokenize_and_label_encoding(self, example):
+        """Tokenize features and encode label
+
+        Usage:
+        >>> from src.pl_data.datamodule import MyDataModule
+        >>> my_dataset = MyDataModule()
+        >>> my_dataset.tokenize_and_label_encoding(my_dataset.train_datasets)
+
+        Args:
+            example (datasets.Dataset): dataset
+
+        Returns:
+            tokens (transformers.BatchEncoding): tokenized and
+                label-encoded dataset
+        """
+        tokens = self.tokenizer(
+            example["discourse_text"],
+            truncation=True,
+            padding="max_length",
+            max_length=self.max_length,
+        )
+        tokens["discourse_type"] = self.labels.str2int(example[gc.LABEL])
         return tokens
 
     def setup(self, stage: Optional[str] = None):
@@ -140,26 +171,31 @@ class MyDataModule(pl.LightningDataModule):
         """
         # Here you should instantiate your datasets, you may also
         if stage == "fit" or stage is None:
-            self.train_dataset = self.train_dataset.map(
+            self.train_datasets = self.train_datasets.map(
                 self.tokenize_and_label_encoding, batched=True
             )
-            self.train_dataset.set_format(
-                type="torch", columns=["input_ids", "attention_mask", "discourse_type"]
+            self.train_datasets.set_format(
+                type="torch", columns=["input_ids", "attention_mask", gc.LABEL]
             )
 
-            self.val_dataset = self.val_dataset.map(
+            self.val_datasets = self.val_datasets.map(
                 self.tokenize_and_label_encoding, batched=True
             )
-            self.val_dataset.set_format(
+            self.val_datasets.set_format(
                 type="torch",
-                columns=["input_ids", "attention_mask", "discourse_type"]
+                columns=["input_ids", "attention_mask", gc.LABEL],
+                output_all_columns=True,
             )
 
         # if stage is None or stage == "test":
-        #     self.test_datasets = [
-        #         hydra.utils.instantiate(dataset_cfg)
-        #         for dataset_cfg in self.datasets.test
-        #     ]
+        #     self.test_datasets = self.test_datasets.map(
+        #         self.tokenize(self.tokenize)
+        #     )
+        #     self.test_datasets.set_format(
+        #         type="torch",
+        #         columns=["input_ids", "attention_mask"],
+        #         output_all_columns=True,
+        #     )
 
     def train_dataloader(self) -> DataLoader:
         """Apply DataLoader on train dataset - shuffle, batch_size, and workers
@@ -170,10 +206,11 @@ class MyDataModule(pl.LightningDataModule):
         >>> my_dataset.train_dataloader()()
 
         Returns:
-            Sequence[DataLoader]: return a Sequence of size = len(train_dataset) / batch_size
+            Sequence[DataLoader]: return a Sequence of
+            size = len(train_dataset) / batch_size
         """
         return DataLoader(
-            self.train_dataset,
+            self.train_datasets,
             shuffle=True,
             batch_size=self.batch_size.train,
             num_workers=self.num_workers.train,
@@ -189,16 +226,17 @@ class MyDataModule(pl.LightningDataModule):
         >>> my_dataset.val_dataloader()
 
         Returns:
-            Sequence[DataLoader]: return a Sequence of size = len(val_dataset) / batch_size
+            Sequence[DataLoader]: return a Sequence of
+            size = len(val_datasets) / batch_size
         """
         return DataLoader(
-            self.val_dataset,
+            self.val_datasets,
             shuffle=False,
             batch_size=self.batch_size.val,
             num_workers=self.num_workers.val,
         )
 
-    def test_dataloader(self) -> Sequence[DataLoader]:
+    def test_dataloader(self) -> DataLoader:
         """Apply DataLoader on val dataset - shuffle, batch_size, and workers
 
         Usage:
@@ -207,18 +245,16 @@ class MyDataModule(pl.LightningDataModule):
         >>> my_dataset.test_dataloader()
 
         Returns:
-            Sequence[DataLoader]: return a Sequence of size = len(test_dataset) / batch_size
+            Sequence[DataLoader]: return a Sequence of
+            size = len(test_dataset) / batch_size
         """
-        return [
-            DataLoader(
-                dataset,
-                shuffle=False,
-                batch_size=self.batch_size.test,
-                num_workers=self.num_workers.test,
-                worker_init_fn=worker_init_fn,
-            )
-            for dataset in self.test_datasets
-        ]
+        return DataLoader(
+            self.test_dataset,
+            shuffle=False,
+            batch_size=self.batch_size.test,
+            num_workers=self.num_workers.test,
+            worker_init_fn=worker_init_fn,
+        )
 
     def __repr__(self) -> str:
         return (
@@ -231,6 +267,7 @@ class MyDataModule(pl.LightningDataModule):
 
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
 def main(cfg: omegaconf.DictConfig):
+    """Execute script"""
     datamodule: pl.LightningDataModule = hydra.utils.instantiate(
         cfg.data.datamodule, _recursive_=False
     )

@@ -217,3 +217,7 @@ fabric.properties
 
 # Wandb
 /wandb
+
+# Dataset
+/data/raw
+/data/feedback_prize-2021

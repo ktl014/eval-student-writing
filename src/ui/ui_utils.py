@@ -6,11 +6,11 @@ from typing import List
 import hydra
 import omegaconf
 import streamlit as st
-import wandb
 from hydra.core.global_hydra import GlobalHydra
 from hydra.experimental import compose
 from stqdm import stqdm
 
+import wandb
 from src.common.utils import PROJECT_ROOT, load_envs
 
 load_envs()
@@ -25,7 +25,8 @@ def local_checkpoint_selection(run_dir: Path, st_key: str) -> Path:
     checkpoint_paths: List[Path] = list(run_dir.rglob("checkpoints/*"))
     if len(checkpoint_paths) == 0:
         st.error(
-            f"There's no checkpoint under {run_dir}! Are you sure the restore was successful?"
+            f"There's no checkpoint under {run_dir}!",
+            "Are you sure the restore was successful?"
         )
         st.stop()
     checkpoint_path: Path = st_run_sel.selectbox(
@@ -62,7 +63,8 @@ def get_run_dir(entity: str, project: str, run_id: str) -> Path:
 
     if len(matching_runs) > 1:
         st.error(
-            f"More than one run matching unique id {run_id}! Are you sure about that?"
+            f"More than one run matching unique id {run_id}!",
+            "Are you sure about that?"
         )
         st.stop()
 
@@ -81,7 +83,8 @@ def get_run_dir(entity: str, project: str, run_id: str) -> Path:
         ]
         if len(files) == 0:
             st.error(
-                f"There is no file to download from this run! Check on WandB: {run.url}"
+                "There is no file to download from this run!",
+                f"Check on WandB: {run.url}"
             )
         for file in stqdm(files, desc="Downloading files..."):
             file.download(root=run_dir)
@@ -101,14 +104,16 @@ def select_run_path(st_key: str, default_run_path: str):
     tokens: List[str] = run_path.split("/")
     if len(tokens) != 3:
         st.error(
-            f"This run path {run_path} doesn't look like a WandB run path! Are you sure about that?"
+            f"This run path {run_path} doesn't look like a WandB run path!",
+            "Are you sure about that?"
         )
         st.stop()
 
     return tokens
 
 
-def select_checkpoint(st_key: str = "MyAwesomeModel", default_run_path: str = ""):
+def select_checkpoint(st_key: str = "MyAwesomeModel",
+                      default_run_path: str = ""):
     entity, project, run_id = select_run_path(
         st_key=st_key, default_run_path=default_run_path
     )
@@ -129,5 +134,7 @@ def get_hydra_cfg(config_name: str = "default") -> omegaconf.DictConfig:
         The desired omegaconf.DictConfig
     """
     GlobalHydra.instance().clear()
-    hydra.experimental.initialize_config_dir(config_dir=str(PROJECT_ROOT / "conf"))
+    hydra.experimental.initialize_config_dir(
+        config_dir=str(PROJECT_ROOT / "conf")
+    )
     return compose(config_name=config_name)
