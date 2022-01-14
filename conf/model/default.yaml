@@ -1,1 +1,5 @@
-_target_: src.pl_modules.model.MyModel
+modelmodule:
+  _target_: src.pl_modules.model.MyModel
+  model_name: google/bert_uncased_L-2_H-512_A-8
+  num_labels: 7
+  onnx: True

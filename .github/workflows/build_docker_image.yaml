@@ -1,0 +1,50 @@
+name: Create Docker Container
+
+on: [push, pull_request]
+
+jobs:
+  esw-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build container
+        env:
+          ECR_REPOSITORY: eval_student_writing
+          IMAGE_TAG: latest
+        run: |
+          docker build --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                       --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                       -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Push2ECR
+        env:
+          ECR_REPOSITORY: eval_student_writing
+          IMAGE_TAG: latest
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: us-west-1
+          image: $ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Update lambda with image
+        run: aws lambda update-function-code --function-name ESW-Function --image-uri 035805338335.dkr.ecr.us-west-1.amazonaws.com/eval_student_writing:latest
+
+# If interested in just the latest pushed image and no matter what's the tag
+# Credit: https://stackoverflow.com/questions/43331418/aws-cli-ecr-list-images-get-newest
+# TAG=$(aws ecr describe-images --output json --repository-name eval_student_writing --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' | jq . --raw-output)
+# docker pull 944XXX.dkr.ecr.us-east-1.amazonaws.com/repository1:$TAG

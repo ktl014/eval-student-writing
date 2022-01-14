@@ -3,26 +3,28 @@ datamodule:
 
   datasets:
     train:
-      _target_: src.pl_data.dataset.MyDataset
-      name: YourTrainDatasetName
-      path: ${oc.env:YOUR_TRAIN_DATASET_PATH}
+      name: EWS_TRAIN
+      # ${oc.env:YOUR_TRAIN_DATASET_PATH}
+      path: data/feedback-prize-2021/train.csv
 
     val:
-      - _target_: src.pl_data.dataset.MyDataset
-        name: YourValDatasetName
-        path: ${oc.env:YOUR_VAL_DATASET_PATH}
+      name: EWS_VAL
+      path: none # ${oc.env:YOUR_VAL_DATASET_PATH}
 
     test:
-      - _target_: src.pl_data.dataset.MyDataset
-        name: YourTestDatasetName
-        path: ${oc.env:YOUR_TEST_DATASET_PATH}
+      name: EWS_TEST
+      path: none # ${oc.env:YOUR_TEST_DATASET_PATH}
 
   num_workers:
-    train: 8
-    val: 4
+    train: 1
+    val: 1
     test: 4
 
   batch_size:
-    train: 32
-    val: 16
+    train: 64
+    val: 32
     test: 16
+
+  max_length: 512
+
+  tokenizer: "google/bert_uncased_L-2_H-512_A-8"
